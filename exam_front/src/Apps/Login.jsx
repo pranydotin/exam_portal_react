@@ -1,21 +1,45 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import "../css/login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [reg, setReg] = useState("");
   const [password, setPassword] = useState("");
   // const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const spinnerRef = useRef(null);
+
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // btn = document.querySelector("button");
-    // btn.setAttribute("disabled", "true");
-    // const formdata = new FormData(form);
-    // formdata.append("type", "login");
-    // console.log(formdata);
+
+    setLoading(true);
+
+    spinnerRef.current.style.display = "block";
+
+    fetch("http://127.0.0.1:8000/api/login/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reg: reg,
+        password: password,
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => console.log(response))
+      .catch((err) => console.error(err))
+      .finally(() => {
+        // ✅ Hide spinner and stop loading only after request finishes
+        if (spinnerRef.current) {
+          spinnerRef.current.style.display = "none";
+        }
+        setLoading(false);
+      });
+    // spinnerRef.current.style.display = "none";
+    // setLoading(false);
   };
 
   const togglePassword = (e) => {
@@ -35,11 +59,11 @@ const Login = () => {
             <div className="login-form-group">
               <input
                 type="text"
-                placeholder="Enter email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                id="email"
-                name="email"
+                placeholder="Enter Registration number"
+                value={reg}
+                onChange={(e) => setReg(e.target.value)}
+                id="reg"
+                name="reg"
               />
               <p className="error none">{error}</p>
             </div>
@@ -90,7 +114,12 @@ const Login = () => {
               disabled={loading}
             >
               <span id="textbtn">
-                {loading ? <i className="fa fa-spinner fa-spin"></i> : "Login"}
+                <i
+                  ref={spinnerRef}
+                  className="fa fa-spinner fa-spin"
+                  style={{ display: "none " }}
+                ></i>
+                Login
               </span>
             </button>
           </form>
