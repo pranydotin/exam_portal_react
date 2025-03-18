@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "../css/login.css";
 
 const Login = () => {
@@ -6,17 +6,30 @@ const Login = () => {
   const [password, setPassword] = useState("");
   // const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const spinnerRef = useRef(null);
 
   const [passwordVisible, setPasswordVisible] = useState(false);
+  // const [status, setStatus] = useState("");
+  const [status_text, setStatusText] = useState("");
+
+  const [responseState, setResponseState] = useState({
+    loading: false,
+    status: null,
+    message: "",
+    color: "",
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    setLoading(true);
+    console.log(responseState);
+    setResponseState((prev) => {
+      return {
+        ...prev,
+        loading: !prev.loading,
+      };
+    });
 
-    spinnerRef.current.style.display = "block";
+    // setStatus("");
 
     fetch("http://127.0.0.1:8000/api/login/", {
       method: "POST",
@@ -29,17 +42,32 @@ const Login = () => {
       }),
     })
       .then((response) => response.json())
-      .then((response) => console.log(response))
+      .then((response) => {
+        console.log(response);
+        // setStatus(response.status);
+
+        setResponseState((prev) => {
+          return {
+            ...prev,
+            status: response.status,
+            message:
+              response.status === 200
+                ? "Success"
+                : response.error || "An error occurred",
+            color: response.status === 200 ? "#086e08" : "#dd0909",
+            loading: response.status !== 200,
+          };
+        });
+      })
       .catch((err) => console.error(err))
       .finally(() => {
-        // ✅ Hide spinner and stop loading only after request finishes
-        if (spinnerRef.current) {
-          spinnerRef.current.style.display = "none";
-        }
-        setLoading(false);
+        setResponseState((prev) => {
+          return {
+            ...prev,
+            loading: !prev.loading,
+          };
+        });
       });
-    // spinnerRef.current.style.display = "none";
-    // setLoading(false);
   };
 
   const togglePassword = (e) => {
@@ -84,6 +112,7 @@ const Login = () => {
                 style={{ cursor: "pointer" }}
               ></i>
             </div>
+
             {/* <div className="login-form-group single-row">
               <div className="custom-check">
                 <input
@@ -103,32 +132,23 @@ const Login = () => {
             </div> */}
             <p
               id="success"
-              className="none"
-              style={{ color: "#086e08", fontWeight: "700" }}
+              className={responseState.status ? "" : "none"}
+              style={{ color: responseState.color, fontWeight: "700" }}
             >
-              Success
+              {responseState.message}
             </p>
             <button
               className="rounded-button login-cta"
               type="submit"
-              disabled={loading}
+              disabled={responseState.loading}
             >
-              <span id="textbtn">
-                <i
-                  ref={spinnerRef}
-                  className="fa fa-spinner fa-spin"
-                  style={{ display: "none " }}
-                ></i>
-                Login
-              </span>
+              <span id="textbtn">Login</span>
+              <i
+                className="fa fa-spinner fa-spin"
+                style={{ display: responseState.loading ? "" : "none" }}
+              ></i>
             </button>
           </form>
-          {/* <div className="register-div">
-            Not registered yet?{" "}
-            <a href="./signup.php" className="link create-account">
-              Create an account?
-            </a>
-          </div> */}
         </div>
       </div>
     </div>
